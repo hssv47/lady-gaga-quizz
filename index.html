@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Interativo: Lady Gaga em Copacabana</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1e1e1e; color: #fff; padding: 2rem; }
+    .quiz-container { max-width: 800px; margin: 0 auto; background: #2e2e2e; padding: 2rem; border-radius: 10px; text-align: center; }
+    .question { margin-bottom: 1.5rem; text-align: left; }
+    .options label { display: block; margin-bottom: 0.5rem; cursor: pointer; text-align: left; }
+    button { background: #e91e63; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer; }
+    .result, .ranking { margin-top: 1rem; font-weight: bold; }
+    img { width: 100%; border-radius: 10px; margin-bottom: 1.5rem; }
+    .share-buttons { margin-top: 1rem; }
+    .share-buttons button { background: #3b5998; margin: 0.2rem; }
+    .share-buttons button.twitter { background: #1da1f2; }
+    .share-buttons button.whatsapp { background: #25d366; }
+    .ranking-list { text-align: left; margin-top: 1rem; }
+    .ranking-list ol { padding-left: 1.5rem; }
+    #finalMessage { margin-top: 1.5rem; font-size: 1.1rem; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>Quiz: Show da Lady Gaga em Copacabana</h1>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Lady_Gaga_Coachella_2017_%282%29.jpg" alt="Lady Gaga ao vivo">
+    <form id="quizForm"></form>
+    <div class="result" id="result"></div>
+    <div id="finalMessage"></div>
+    <div class="ranking" id="ranking"></div>
+    <div class="share-buttons" id="shareButtons" style="display:none;">
+      <p>Compartilhe seu resultado:</p>
+      <button onclick="share('facebook')">Facebook</button>
+      <button class="twitter" onclick="share('twitter')">Twitter</button>
+      <button class="whatsapp" onclick="share('whatsapp')">WhatsApp</button>
+    </div>
+  </div>
+  <script>
+    const perguntas = [...]; // mesma lista de perguntas
+
+    const form = document.getElementById("quizForm");
+    perguntas.forEach((pergunta, index) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<p>${pergunta.texto}</p>`;
+      const optionsDiv = document.createElement("div");
+      optionsDiv.className = "options";
+      pergunta.opcoes.forEach((opcao, i) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="radio" name="q${index}" value="${i}"> ${opcao}`;
+        optionsDiv.appendChild(label);
+      });
+      div.appendChild(optionsDiv);
+      form.appendChild(div);
+    });
+    const button = document.createElement("button");
+    button.type = "button";
+    button.innerText = "Ver Resultado";
+    button.onclick = checkAnswers;
+    form.appendChild(button);
+
+    let startTime = Date.now();
+
+    function checkAnswers() {
+      let score = 0;
+      perguntas.forEach((p, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && parseInt(selected.value) === p.correta) score++;
+      });
+      const timeTaken = Math.round((Date.now() - startTime) / 1000);
+      const resultText = `Você acertou ${score} de ${perguntas.length} perguntas em ${timeTaken} segundos!`;
+      document.getElementById("result").textContent = resultText;
+      document.getElementById("shareButtons").style.display = 'block';
+      const message = getFinalMessage(score);
+      document.getElementById("finalMessage").textContent = message;
+      saveToRanking(score, timeTaken);
+    }
+
+    function getFinalMessage(score) {
+      if (score >= 27) return "Incrível! Você é um verdadeiro especialista no show da Lady Gaga! 🎤✨";
+      if (score >= 20) return "Muito bem! Você mandou super bem no quiz! 🌟";
+      if (score >= 15) return "Bom trabalho! Mas ainda dá pra melhorar. 😉";
+      if (score >= 10) return "Você acertou algumas boas, mas tente de novo para melhorar! 👍";
+      return "Hora de estudar mais sobre o show da Gaga! 😅";
+    }
+
+    function saveToRanking(score, time) {
+      const ranking = JSON.parse(localStorage.getItem("ladyGagaRanking") || "[]");
+      const name = prompt("Digite seu nome para o ranking:");
+      if (!name) return;
+      ranking.push({ name, score, time });
+      ranking.sort((a, b) => b.score - a.score || a.time - b.time);
+      ranking.splice(10);
+      localStorage.setItem("ladyGagaRanking", JSON.stringify(ranking));
+      showRanking(ranking);
+    }
+
+    function showRanking(ranking) {
+      const div = document.getElementById("ranking");
+      div.innerHTML = `<h3>🏆 Ranking Top 10</h3><div class="ranking-list"><ol>${ranking.map(entry => `<li>${entry.name}: ${entry.score}/${perguntas.length} em ${entry.time}s</li>`).join('')}</ol></div>`;
+    }
+
+    function share(platform) {
+      const result = document.getElementById("result").textContent;
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(result + " Confira o quiz do show da Lady Gaga!");
+      let shareUrl = "";
+      if (platform === 'facebook') {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      } else if (platform === 'twitter') {
+        shareUrl = `https://twitter.com/intent/tweet?text=${text}`;
+      } else if (platform === 'whatsapp') {
+        shareUrl = `https://wa.me/?text=${text}`;
+      }
+      window.open(shareUrl, '_blank');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedRanking = JSON.parse(localStorage.getItem("ladyGagaRanking") || "[]");
+      if (savedRanking.length > 0) showRanking(savedRanking);
+    });
+  </script>
+</body>
+</html>
